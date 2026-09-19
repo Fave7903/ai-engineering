@@ -5,6 +5,9 @@ import helmet from 'helmet';
 import { config } from './lib/config';
 import { logger } from './lib/logger';
 import { errorHandler } from './middleware/error-handler';
+import './events/auth.events';
+import authRoutes from './routes/auth';
+import documentRoutes from './routes/documents';
 
 const app = express();
 
@@ -26,6 +29,16 @@ app.use((req, res, next) => {
 
   next();
 });
+
+app.use(
+  '/api',
+  documentRoutes,
+);
+
+app.use(
+  '/api/auth',
+  authRoutes,
+);
 
 // Health check
 app.get('/health', (_req, res) => {
