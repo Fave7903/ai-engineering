@@ -9,6 +9,11 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/docuchat_test?schema=public
+      JWT_ACCESS_SECRET: ci-access-secret-at-least-thirty-two-characters
+      JWT_REFRESH_SECRET: ci-refresh-secret-at-least-thirty-two-characters
+      NODE_ENV: test
     
     # Spin up a temporary Postgres container for the CI run
     services:
@@ -42,17 +47,9 @@ jobs:
         run: npx prisma generate
         
       - name: Run migrations
-        env:
-          # Point Prisma to the temporary CI database
-          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/docuchat_test?schema=public
         run: npx prisma migrate deploy
         
       - name: Run tests
-        env:
-          DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/docuchat_test?schema=public
-          JWT_ACCESS_SECRET: ci-access-secret-at-least-thirty-two-characters
-          JWT_REFRESH_SECRET: ci-refresh-secret-at-least-thirty-two-characters
-          NODE_ENV: test
         run: npm run test:coverage
         
       - name: Upload coverage report
