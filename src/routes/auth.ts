@@ -5,14 +5,48 @@ import {
 import * as authService
   from '../services/auth.service';
 
+import { validate } from '../middleware/validate';
+import { registerSchema, loginSchema, refreshSchema } from '../validators/auth.validator';
+
 const router = Router();
 
 // ─────────────────────────────────────────────
 // POST /api/auth/register
 // ─────────────────────────────────────────────
-
+ 
+/** 
+ * @swagger 
+ * /auth/register: 
+ *   post: 
+ *     summary: Register a new user 
+ *     tags: [Authentication] 
+ *     requestBody: 
+ *       required: true 
+ *       content: 
+ *         application/json: 
+ *           schema: 
+ *             type: object 
+ *             required: [email, password] 
+ *             properties: 
+ *               email: 
+ *                 type: string 
+ *                 format: email 
+ *                 example: student@example.com 
+ *               password: 
+ *                 type: string 
+ *                 minLength: 8 
+ *                 example: MyPassword123 
+ *     responses: 
+ *       201: 
+ *         description: User created successfully 
+ *       400: 
+ *         description: Validation error 
+ *       409: 
+ *         description: Email already registered 
+ */ 
 router.post(
   '/register',
+  validate(registerSchema),
   async (req, res, next) => {
     try {
       const user =
@@ -21,7 +55,8 @@ router.post(
         );
 
       return res.status(201).json({
-        user,
+        success: true,
+        data: user,
       });
     } catch (error) {
       next(error);
@@ -35,6 +70,7 @@ router.post(
 
 router.post(
   '/login',
+  validate(loginSchema),
   async (req, res, next) => {
     try {
       const result =
@@ -44,7 +80,7 @@ router.post(
             req.headers['user-agent'],
         });
 
-      return res.json(result);
+      return res.json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
@@ -57,6 +93,7 @@ router.post(
 
 router.post(
   '/refresh',
+  validate(refreshSchema),
   async (req, res, next) => {
     try {
       const {
@@ -68,7 +105,7 @@ router.post(
           refreshToken,
         );
 
-      return res.json(result);
+      return res.json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
@@ -81,6 +118,7 @@ router.post(
 
 router.post(
   '/logout',
+  validate(refreshSchema),
   async (req, res, next) => {
     try {
       const {
@@ -91,9 +129,7 @@ router.post(
         refreshToken,
       );
 
-      return res.json({
-        message: 'Logged out',
-      });
+      return res.json({ success: true, message: 'Logged out' });
     } catch (error) {
       next(error);
     }

@@ -13,6 +13,7 @@ import {
 import { appEvents } from '../lib/events';
 import { AUTH_EVENTS } from '../events/auth.events';
 import { userRepository } from '../repositories/user.repository';
+import { ConflictError, NotFoundError, UnauthorizedError } from '../lib/errors';
 
 function normalizeEmail(email: string): string {
   return email.toLowerCase().trim();
@@ -39,7 +40,7 @@ export async function register(data: {
   const existing = await userRepository.findByEmail(email);
 
   if (existing) {
-    throw new Error('Email already registered');
+    throw new ConflictError('Email already registered');
   }
 
   const passwordHash = await hashPassword(
@@ -91,7 +92,7 @@ export async function login(data: {
       },
     );
 
-    throw new Error('Invalid credentials');
+    throw new NotFoundError('Invalid credentials');
   }
 
   const valid = await verifyPassword(
@@ -109,7 +110,7 @@ export async function login(data: {
       },
     );
 
-    throw new Error('Invalid credentials');
+    throw new NotFoundError('Invalid credentials');
   }
 
   const accessToken = generateAccessToken(user);
@@ -163,13 +164,13 @@ export async function refresh(
     payload =
       verifyRefreshToken(rawRefreshToken);
   } catch {
-    throw new Error(
+    throw new UnauthorizedError(
       'Invalid refresh token',
     );
   }
 
   if (payload.type !== 'refresh') {
-    throw new Error(
+    throw new UnauthorizedError(
       'Invalid token type',
     );
   }
@@ -188,7 +189,7 @@ export async function refresh(
     !stored ||
     stored.expiresAt < new Date()
   ) {
-    throw new Error(
+    throw new UnauthorizedError(
       'Refresh token expired or revoked',
     );
   }
@@ -200,7 +201,7 @@ export async function refresh(
   });
 
   if (!user || !user.isActive) {
-    throw new Error(
+    throw new NotFoundError(
       'User not found or inactive',
     );
   }

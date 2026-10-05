@@ -6,8 +6,13 @@ import { config } from './lib/config';
 import { logger } from './lib/logger';
 import { errorHandler } from './middleware/error-handler';
 import './events/auth.events';
+import './events/admin.events';
+import adminRoutes from './routes/admin';
 import authRoutes from './routes/auth';
 import documentRoutes from './routes/documents';
+import conversationRoutes from './routes/conversations';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
 
 const app = express();
 
@@ -30,14 +35,32 @@ app.use((req, res, next) => {
   next();
 });
 
+// Serve Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Also serve the raw JSON spec (useful for code generators)
+app.get('/api-docs.json', (req, res) => {
+  res.json(swaggerSpec);
+});
+
 app.use(
-  '/api',
+  '/api/v1/auth',
+  authRoutes,
+);
+
+app.use(
+  '/api/v1/admin',
+  adminRoutes,
+);
+
+app.use(
+  '/api/v1/documents',
   documentRoutes,
 );
 
 app.use(
-  '/api/auth',
-  authRoutes,
+  '/api/v1/conversations', 
+  conversationRoutes
 );
 
 // Health check
@@ -49,12 +72,18 @@ app.get('/health', (_req, res) => {
   });
 });
 
-// Routes will be mounted here as the project grows.
-// app.use('/api/v1/auth', authRoutes);
-// app.use('/api/v1/documents', documentRoutes);
-// app.use('/api/v1/chat', chatRoutes);
+// 404 handler for unknown routes
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: { 
+      code: 'NOT_FOUND', 
+      message: `Route ${req.path} not found` 
+    },
+  });
+});
 
-// Error handler must be last
+// Global error handler (MUST be last)
 app.use(errorHandler);
 
 export { app };

@@ -15,14 +15,7 @@ appEvents.on(AUTH_EVENTS.USER_REGISTERED, async (user) => {
     await prisma.usageLog.create({
       data: {
         userId: user.id,
-        action: 'signup',
-        tokens: 0,
-        costUsd: 0,
-        metadata: JSON.stringify({
-          email: user.email,
-          tier: user.tier,
-          registeredAt: new Date().toISOString(),
-        }),
+        action: 'signup'
       },
     });
   } catch (error) {
